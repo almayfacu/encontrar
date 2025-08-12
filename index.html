@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corazón</title>
+  <style>
+    :root {
+      --pink: #ffc1cc;
+      --blue: #cceeff;
+      --purple: #e0ccff;
+      --text: #444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #ffe4ec;
+      font-family: 'Comic Sans MS';
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+      text-align: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      color: #ff4d94;
+      margin-bottom: 20px;
+      font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 10px;
+    }
+
+    .heart {
+      background-color: var(--purple);
+      padding: 18px;
+      border-radius: 18px;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .heart img {
+      width: 100%;
+      max-width: 90px;
+      height: auto;
+      user-select: none;
+    }
+
+    .heart:hover {
+      transform: scale(1.1);
+    }
+
+    .message {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      color: #555;
+      min-height: 1.5em;
+    }
+
+    .final-image-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    .final-image {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    #restart-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #be93fd;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-family: 'Comic Sans MS';
+      color: #FFFFFF;
+    }
+
+    #restart-btn:hover {
+      background-color: var(--pink);
+    }
+
+    .sad-effects {
+      position: fixed;
+      pointer-events: none;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+      overflow: hidden;
+    }
+
+    .tear {
+      position: absolute;
+      font-size: 25px;
+      animation: fall 3s linear infinite;
+      opacity: 0.8;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-100px) rotate(0deg);
+      }
+      100% {
+        transform: translateY(110vh) rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="title">¡Encuentra el corazón roto, para revelar otra razón!</h1>
+
+  <div class="grid" id="heartGrid"></div>
+  <div class="message" id="message"></div>
+
+  <!-- Imagen y botón final -->
+  <div id="finalImageContainer" class="final-image-container">
+    <img id="finalImage" class="final-image" src="tristeza.png" alt="Sorpresa de Amor" />
+    <br />
+    <button id="restart-btn">Volver a jugar</button>
+  </div>
+
+  <!-- Efectos de tristeza -->
+  <div class="sad-effects" id="effects"></div>
+
+  <!-- Sonidos -->
+  <audio id="sound-error" src="casi.mp3"></audio>
+  <audio id="sound-success" src="correcto.mp3"></audio>
+
+  <script>
+    const heartGrid = document.getElementById("heartGrid");
+    const message = document.getElementById("message");
+    const finalImageContainer = document.getElementById("finalImageContainer");
+    const soundError = document.getElementById("sound-error");
+    const soundSuccess = document.getElementById("sound-success");
+    const effects = document.getElementById("effects");
+    const restartBtn = document.getElementById("restart-btn");
+    const title = document.getElementById("title");
+
+    const totalHearts = 23;
+    let brokenIndex = Math.floor(Math.random() * totalHearts);
+
+    function createHearts() {
+      heartGrid.innerHTML = "";
+      for (let i = 0; i < totalHearts; i++) {
+        const heart = document.createElement("div");
+        heart.classList.add("heart");
+
+        const img = document.createElement("img");
+        img.src = "corazon.png";
+        img.alt = "Corazón";
+        img.dataset.index = i;
+
+        heart.appendChild(img);
+        heart.onclick = () => checkHeart(i, img);
+        heartGrid.appendChild(heart);
+      }
+    }
+
+    function checkHeart(index, imgElement) {
+      // Detener el sonido de error si está sonando
+      soundError.pause();
+      soundError.currentTime = 0; // Reiniciar el sonido al inicio
+
+      if (index === brokenIndex) {
+        imgElement.src = "corazonroto.png";
+        soundSuccess.play();
+        disableAllHearts();
+        launchSadEffects();
+
+        // Ocultar juego y título
+        title.style.display = "none";
+        heartGrid.style.display = "none";
+        message.style.display = "none";
+
+        // Mostrar imagen final
+        finalImageContainer.style.display = "block";
+      } else {
+        imgElement.src = "corazonsano.png";
+        imgElement.style.opacity = "0.6";
+        soundError.play(); // Reproducir el sonido de error
+        imgElement.parentElement.style.pointerEvents = "none";
+      }
+    }
+
+    function disableAllHearts() {
+      document.querySelectorAll(".heart").forEach(h => {
+        h.style.pointerEvents = "none";
+      });
+    }
+
+    function launchSadEffects() {
+      for (let i = 0; i < 80; i++) {
+        const tear = document.createElement("div");
+        tear.classList.add("tear");
+        tear.textContent = "💧";
+        tear.style.left = `${Math.random() * 100}vw`;
+        tear.style.animationDelay = `${Math.random() * 2}s`;
+        tear.style.fontSize = `${20 + Math.random() * 20}px`;
+        effects.appendChild(tear);
+        setTimeout(() => tear.remove(), 5000);
+      }
+    }
+
+    restartBtn.addEventListener("click", () => {
+      finalImageContainer.style.display = "none";
+      effects.innerHTML = "";
+      title.style.display = "block";
+      heartGrid.style.display = "grid";
+      message.style.display = "block";
+      brokenIndex = Math.floor(Math.random() * totalHearts);
+      createHearts();
+      message.textContent = "";
+    });
+
+    // Inicializar
+    createHearts();
+  </script>
+</body>
+</html>
